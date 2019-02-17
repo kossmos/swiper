@@ -4997,336 +4997,153 @@
     },
   };
 
-  var Scrollbar = {
-    setTranslate: function setTranslate() {
-      var swiper = this;
-      if (!swiper.params.scrollbar.el || !swiper.scrollbar.el) { return; }
-      var scrollbar = swiper.scrollbar;
-      var rtl = swiper.rtlTranslate;
-      var progress = swiper.progress;
-      var dragSize = scrollbar.dragSize;
-      var trackSize = scrollbar.trackSize;
-      var $dragEl = scrollbar.$dragEl;
-      var $el = scrollbar.$el;
-      var params = swiper.params.scrollbar;
+  /* eslint no-underscore-dangle: "off" */
 
-      var newSize = dragSize;
-      var newPos = (trackSize - dragSize) * progress;
-      if (rtl) {
-        newPos = -newPos;
-        if (newPos > 0) {
-          newSize = dragSize - newPos;
-          newPos = 0;
-        } else if (-newPos + dragSize > trackSize) {
-          newSize = trackSize + newPos;
-        }
-      } else if (newPos < 0) {
-        newSize = dragSize + newPos;
-        newPos = 0;
-      } else if (newPos + dragSize > trackSize) {
-        newSize = trackSize - newPos;
+  var Autoplay = {
+    run: function run() {
+      var swiper = this;
+      var $activeSlideEl = swiper.slides.eq(swiper.activeIndex);
+      var delay = swiper.params.autoplay.delay;
+      if ($activeSlideEl.attr('data-swiper-autoplay')) {
+        delay = $activeSlideEl.attr('data-swiper-autoplay') || swiper.params.autoplay.delay;
       }
-      if (swiper.isHorizontal()) {
-        if (Support.transforms3d) {
-          $dragEl.transform(("translate3d(" + newPos + "px, 0, 0)"));
+      swiper.autoplay.timeout = Utils.nextTick(function () {
+        if (swiper.params.autoplay.reverseDirection) {
+          if (swiper.params.loop) {
+            swiper.loopFix();
+            swiper.slidePrev(swiper.params.speed, true, true);
+            swiper.emit('autoplay');
+          } else if (!swiper.isBeginning) {
+            swiper.slidePrev(swiper.params.speed, true, true);
+            swiper.emit('autoplay');
+          } else if (!swiper.params.autoplay.stopOnLastSlide) {
+            swiper.slideTo(swiper.slides.length - 1, swiper.params.speed, true, true);
+            swiper.emit('autoplay');
+          } else {
+            swiper.autoplay.stop();
+          }
+        } else if (swiper.params.loop) {
+          swiper.loopFix();
+          swiper.slideNext(swiper.params.speed, true, true);
+          swiper.emit('autoplay');
+        } else if (!swiper.isEnd) {
+          swiper.slideNext(swiper.params.speed, true, true);
+          swiper.emit('autoplay');
+        } else if (!swiper.params.autoplay.stopOnLastSlide) {
+          swiper.slideTo(0, swiper.params.speed, true, true);
+          swiper.emit('autoplay');
         } else {
-          $dragEl.transform(("translateX(" + newPos + "px)"));
+          swiper.autoplay.stop();
         }
-        $dragEl[0].style.width = newSize + "px";
+      }, delay);
+    },
+    start: function start() {
+      var swiper = this;
+      if (typeof swiper.autoplay.timeout !== 'undefined') { return false; }
+      if (swiper.autoplay.running) { return false; }
+      swiper.autoplay.running = true;
+      swiper.emit('autoplayStart');
+      swiper.autoplay.run();
+      return true;
+    },
+    stop: function stop() {
+      var swiper = this;
+      if (!swiper.autoplay.running) { return false; }
+      if (typeof swiper.autoplay.timeout === 'undefined') { return false; }
+
+      if (swiper.autoplay.timeout) {
+        clearTimeout(swiper.autoplay.timeout);
+        swiper.autoplay.timeout = undefined;
+      }
+      swiper.autoplay.running = false;
+      swiper.emit('autoplayStop');
+      return true;
+    },
+    pause: function pause(speed) {
+      var swiper = this;
+      if (!swiper.autoplay.running) { return; }
+      if (swiper.autoplay.paused) { return; }
+      if (swiper.autoplay.timeout) { clearTimeout(swiper.autoplay.timeout); }
+      swiper.autoplay.paused = true;
+      if (speed === 0 || !swiper.params.autoplay.waitForTransition) {
+        swiper.autoplay.paused = false;
+        swiper.autoplay.run();
       } else {
-        if (Support.transforms3d) {
-          $dragEl.transform(("translate3d(0px, " + newPos + "px, 0)"));
-        } else {
-          $dragEl.transform(("translateY(" + newPos + "px)"));
-        }
-        $dragEl[0].style.height = newSize + "px";
+        swiper.$wrapperEl[0].addEventListener('transitionend', swiper.autoplay.onTransitionEnd);
+        swiper.$wrapperEl[0].addEventListener('webkitTransitionEnd', swiper.autoplay.onTransitionEnd);
       }
-      if (params.hide) {
-        clearTimeout(swiper.scrollbar.timeout);
-        $el[0].style.opacity = 1;
-        swiper.scrollbar.timeout = setTimeout(function () {
-          $el[0].style.opacity = 0;
-          $el.transition(400);
-        }, 1000);
-      }
-    },
-    setTransition: function setTransition(duration) {
-      var swiper = this;
-      if (!swiper.params.scrollbar.el || !swiper.scrollbar.el) { return; }
-      swiper.scrollbar.$dragEl.transition(duration);
-    },
-    updateSize: function updateSize() {
-      var swiper = this;
-      if (!swiper.params.scrollbar.el || !swiper.scrollbar.el) { return; }
-
-      var scrollbar = swiper.scrollbar;
-      var $dragEl = scrollbar.$dragEl;
-      var $el = scrollbar.$el;
-
-      $dragEl[0].style.width = '';
-      $dragEl[0].style.height = '';
-      var trackSize = swiper.isHorizontal() ? $el[0].offsetWidth : $el[0].offsetHeight;
-
-      var divider = swiper.size / swiper.virtualSize;
-      var moveDivider = divider * (trackSize / swiper.size);
-      var dragSize;
-      if (swiper.params.scrollbar.dragSize === 'auto') {
-        dragSize = trackSize * divider;
-      } else {
-        dragSize = parseInt(swiper.params.scrollbar.dragSize, 10);
-      }
-
-      if (swiper.isHorizontal()) {
-        $dragEl[0].style.width = dragSize + "px";
-      } else {
-        $dragEl[0].style.height = dragSize + "px";
-      }
-
-      if (divider >= 1) {
-        $el[0].style.display = 'none';
-      } else {
-        $el[0].style.display = '';
-      }
-      if (swiper.params.scrollbarHide) {
-        $el[0].style.opacity = 0;
-      }
-      Utils.extend(scrollbar, {
-        trackSize: trackSize,
-        divider: divider,
-        moveDivider: moveDivider,
-        dragSize: dragSize,
-      });
-      scrollbar.$el[swiper.params.watchOverflow && swiper.isLocked ? 'addClass' : 'removeClass'](swiper.params.scrollbar.lockClass);
-    },
-    setDragPosition: function setDragPosition(e) {
-      var swiper = this;
-      var scrollbar = swiper.scrollbar;
-      var rtl = swiper.rtlTranslate;
-      var $el = scrollbar.$el;
-      var dragSize = scrollbar.dragSize;
-      var trackSize = scrollbar.trackSize;
-
-      var pointerPosition;
-      if (swiper.isHorizontal()) {
-        pointerPosition = ((e.type === 'touchstart' || e.type === 'touchmove') ? e.targetTouches[0].pageX : e.pageX || e.clientX);
-      } else {
-        pointerPosition = ((e.type === 'touchstart' || e.type === 'touchmove') ? e.targetTouches[0].pageY : e.pageY || e.clientY);
-      }
-      var positionRatio;
-      positionRatio = ((pointerPosition) - $el.offset()[swiper.isHorizontal() ? 'left' : 'top'] - (dragSize / 2)) / (trackSize - dragSize);
-      positionRatio = Math.max(Math.min(positionRatio, 1), 0);
-      if (rtl) {
-        positionRatio = 1 - positionRatio;
-      }
-
-      var position = swiper.minTranslate() + ((swiper.maxTranslate() - swiper.minTranslate()) * positionRatio);
-
-      swiper.updateProgress(position);
-      swiper.setTranslate(position);
-      swiper.updateActiveIndex();
-      swiper.updateSlidesClasses();
-    },
-    onDragStart: function onDragStart(e) {
-      var swiper = this;
-      var params = swiper.params.scrollbar;
-      var scrollbar = swiper.scrollbar;
-      var $wrapperEl = swiper.$wrapperEl;
-      var $el = scrollbar.$el;
-      var $dragEl = scrollbar.$dragEl;
-      swiper.scrollbar.isTouched = true;
-      e.preventDefault();
-      e.stopPropagation();
-
-      $wrapperEl.transition(100);
-      $dragEl.transition(100);
-      scrollbar.setDragPosition(e);
-
-      clearTimeout(swiper.scrollbar.dragTimeout);
-
-      $el.transition(0);
-      if (params.hide) {
-        $el.css('opacity', 1);
-      }
-      swiper.emit('scrollbarDragStart', e);
-    },
-    onDragMove: function onDragMove(e) {
-      var swiper = this;
-      var scrollbar = swiper.scrollbar;
-      var $wrapperEl = swiper.$wrapperEl;
-      var $el = scrollbar.$el;
-      var $dragEl = scrollbar.$dragEl;
-
-      if (!swiper.scrollbar.isTouched) { return; }
-      if (e.preventDefault) { e.preventDefault(); }
-      else { e.returnValue = false; }
-      scrollbar.setDragPosition(e);
-      $wrapperEl.transition(0);
-      $el.transition(0);
-      $dragEl.transition(0);
-      swiper.emit('scrollbarDragMove', e);
-    },
-    onDragEnd: function onDragEnd(e) {
-      var swiper = this;
-
-      var params = swiper.params.scrollbar;
-      var scrollbar = swiper.scrollbar;
-      var $el = scrollbar.$el;
-
-      if (!swiper.scrollbar.isTouched) { return; }
-      swiper.scrollbar.isTouched = false;
-      if (params.hide) {
-        clearTimeout(swiper.scrollbar.dragTimeout);
-        swiper.scrollbar.dragTimeout = Utils.nextTick(function () {
-          $el.css('opacity', 0);
-          $el.transition(400);
-        }, 1000);
-      }
-      swiper.emit('scrollbarDragEnd', e);
-      if (params.snapOnRelease) {
-        swiper.slideToClosest();
-      }
-    },
-    enableDraggable: function enableDraggable() {
-      var swiper = this;
-      if (!swiper.params.scrollbar.el) { return; }
-      var scrollbar = swiper.scrollbar;
-      var touchEventsTouch = swiper.touchEventsTouch;
-      var touchEventsDesktop = swiper.touchEventsDesktop;
-      var params = swiper.params;
-      var $el = scrollbar.$el;
-      var target = $el[0];
-      var activeListener = Support.passiveListener && params.passiveListeners ? { passive: false, capture: false } : false;
-      var passiveListener = Support.passiveListener && params.passiveListeners ? { passive: true, capture: false } : false;
-      if (!Support.touch) {
-        target.addEventListener(touchEventsDesktop.start, swiper.scrollbar.onDragStart, activeListener);
-        doc.addEventListener(touchEventsDesktop.move, swiper.scrollbar.onDragMove, activeListener);
-        doc.addEventListener(touchEventsDesktop.end, swiper.scrollbar.onDragEnd, passiveListener);
-      } else {
-        target.addEventListener(touchEventsTouch.start, swiper.scrollbar.onDragStart, activeListener);
-        target.addEventListener(touchEventsTouch.move, swiper.scrollbar.onDragMove, activeListener);
-        target.addEventListener(touchEventsTouch.end, swiper.scrollbar.onDragEnd, passiveListener);
-      }
-    },
-    disableDraggable: function disableDraggable() {
-      var swiper = this;
-      if (!swiper.params.scrollbar.el) { return; }
-      var scrollbar = swiper.scrollbar;
-      var touchEventsTouch = swiper.touchEventsTouch;
-      var touchEventsDesktop = swiper.touchEventsDesktop;
-      var params = swiper.params;
-      var $el = scrollbar.$el;
-      var target = $el[0];
-      var activeListener = Support.passiveListener && params.passiveListeners ? { passive: false, capture: false } : false;
-      var passiveListener = Support.passiveListener && params.passiveListeners ? { passive: true, capture: false } : false;
-      if (!Support.touch) {
-        target.removeEventListener(touchEventsDesktop.start, swiper.scrollbar.onDragStart, activeListener);
-        doc.removeEventListener(touchEventsDesktop.move, swiper.scrollbar.onDragMove, activeListener);
-        doc.removeEventListener(touchEventsDesktop.end, swiper.scrollbar.onDragEnd, passiveListener);
-      } else {
-        target.removeEventListener(touchEventsTouch.start, swiper.scrollbar.onDragStart, activeListener);
-        target.removeEventListener(touchEventsTouch.move, swiper.scrollbar.onDragMove, activeListener);
-        target.removeEventListener(touchEventsTouch.end, swiper.scrollbar.onDragEnd, passiveListener);
-      }
-    },
-    init: function init() {
-      var swiper = this;
-      if (!swiper.params.scrollbar.el) { return; }
-      var scrollbar = swiper.scrollbar;
-      var $swiperEl = swiper.$el;
-      var params = swiper.params.scrollbar;
-
-      var $el = $(params.el);
-      if (swiper.params.uniqueNavElements && typeof params.el === 'string' && $el.length > 1 && $swiperEl.find(params.el).length === 1) {
-        $el = $swiperEl.find(params.el);
-      }
-
-      var $dragEl = $el.find(("." + (swiper.params.scrollbar.dragClass)));
-      if ($dragEl.length === 0) {
-        $dragEl = $(("<div class=\"" + (swiper.params.scrollbar.dragClass) + "\"></div>"));
-        $el.append($dragEl);
-      }
-
-      Utils.extend(scrollbar, {
-        $el: $el,
-        el: $el[0],
-        $dragEl: $dragEl,
-        dragEl: $dragEl[0],
-      });
-
-      if (params.draggable) {
-        scrollbar.enableDraggable();
-      }
-    },
-    destroy: function destroy() {
-      var swiper = this;
-      swiper.scrollbar.disableDraggable();
     },
   };
 
-  var Scrollbar$1 = {
-    name: 'scrollbar',
+  var Autoplay$1 = {
+    name: 'autoplay',
     params: {
-      scrollbar: {
-        el: null,
-        dragSize: 'auto',
-        hide: false,
-        draggable: false,
-        snapOnRelease: true,
-        lockClass: 'swiper-scrollbar-lock',
-        dragClass: 'swiper-scrollbar-drag',
+      autoplay: {
+        enabled: false,
+        delay: 3000,
+        waitForTransition: true,
+        disableOnInteraction: true,
+        stopOnLastSlide: false,
+        reverseDirection: false,
       },
     },
     create: function create() {
       var swiper = this;
       Utils.extend(swiper, {
-        scrollbar: {
-          init: Scrollbar.init.bind(swiper),
-          destroy: Scrollbar.destroy.bind(swiper),
-          updateSize: Scrollbar.updateSize.bind(swiper),
-          setTranslate: Scrollbar.setTranslate.bind(swiper),
-          setTransition: Scrollbar.setTransition.bind(swiper),
-          enableDraggable: Scrollbar.enableDraggable.bind(swiper),
-          disableDraggable: Scrollbar.disableDraggable.bind(swiper),
-          setDragPosition: Scrollbar.setDragPosition.bind(swiper),
-          onDragStart: Scrollbar.onDragStart.bind(swiper),
-          onDragMove: Scrollbar.onDragMove.bind(swiper),
-          onDragEnd: Scrollbar.onDragEnd.bind(swiper),
-          isTouched: false,
-          timeout: null,
-          dragTimeout: null,
+        autoplay: {
+          running: false,
+          paused: false,
+          run: Autoplay.run.bind(swiper),
+          start: Autoplay.start.bind(swiper),
+          stop: Autoplay.stop.bind(swiper),
+          pause: Autoplay.pause.bind(swiper),
+          onTransitionEnd: function onTransitionEnd(e) {
+            if (!swiper || swiper.destroyed || !swiper.$wrapperEl) { return; }
+            if (e.target !== this) { return; }
+            swiper.$wrapperEl[0].removeEventListener('transitionend', swiper.autoplay.onTransitionEnd);
+            swiper.$wrapperEl[0].removeEventListener('webkitTransitionEnd', swiper.autoplay.onTransitionEnd);
+            swiper.autoplay.paused = false;
+            if (!swiper.autoplay.running) {
+              swiper.autoplay.stop();
+            } else {
+              swiper.autoplay.run();
+            }
+          },
         },
       });
     },
     on: {
       init: function init() {
         var swiper = this;
-        swiper.scrollbar.init();
-        swiper.scrollbar.updateSize();
-        swiper.scrollbar.setTranslate();
+        if (swiper.params.autoplay.enabled) {
+          swiper.autoplay.start();
+        }
       },
-      update: function update() {
+      beforeTransitionStart: function beforeTransitionStart(speed, internal) {
         var swiper = this;
-        swiper.scrollbar.updateSize();
+        if (swiper.autoplay.running) {
+          if (internal || !swiper.params.autoplay.disableOnInteraction) {
+            swiper.autoplay.pause(speed);
+          } else {
+            swiper.autoplay.stop();
+          }
+        }
       },
-      resize: function resize() {
+      sliderFirstMove: function sliderFirstMove() {
         var swiper = this;
-        swiper.scrollbar.updateSize();
-      },
-      observerUpdate: function observerUpdate() {
-        var swiper = this;
-        swiper.scrollbar.updateSize();
-      },
-      setTranslate: function setTranslate() {
-        var swiper = this;
-        swiper.scrollbar.setTranslate();
-      },
-      setTransition: function setTransition(duration) {
-        var swiper = this;
-        swiper.scrollbar.setTransition(duration);
+        if (swiper.autoplay.running) {
+          if (swiper.params.autoplay.disableOnInteraction) {
+            swiper.autoplay.stop();
+          } else {
+            swiper.autoplay.pause();
+          }
+        }
       },
       destroy: function destroy() {
         var swiper = this;
-        swiper.scrollbar.destroy();
+        if (swiper.autoplay.running) {
+          swiper.autoplay.stop();
+        }
       },
     },
   };
@@ -5342,7 +5159,7 @@
     Mousewheel$1,
     Navigation$1,
     Pagination$1,
-    Scrollbar$1
+    Autoplay$1
   ];
 
   if (typeof Swiper.use === 'undefined') {
