@@ -1,5 +1,5 @@
 {
-  "name": "swiper-src",
+  "name": "@modulbank/swiper",
   "version": "5.2.2",
   "description": "Most modern mobile touch slider and framework with hardware accelerated transitions",
   "scripts": {
