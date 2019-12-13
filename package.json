@@ -9,12 +9,11 @@
     "dev": "cross-env NODE_ENV=development gulp build && cross-env NODE_ENV=development gulp playground && cross-env NODE_ENV=development gulp server",
     "prod": "cross-env NODE_ENV=production gulp playground && cross-env NODE_ENV=production gulp server",
     "lint": "eslint .",
-    "lint-fix": "eslint . --fix",
-    "test": "npm run lint && npm run build:dev"
+    "lint-fix": "eslint . --fix"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nolimits4web/Swiper.git"
+    "url": "https://github.com/kossmos/Swiper.git"
   },
   "keywords": [
     "swiper",
@@ -35,7 +34,7 @@
   "author": "Vladimir Kharlampidi",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/nolimits4web/Swiper/issues"
+    "url": "https://github.com/kossmos/Swiper/issues"
   },
   "homepage": "http://swiperjs.com",
   "funding": {
