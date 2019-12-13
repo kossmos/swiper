@@ -1,7 +1,7 @@
 module.exports = {
   components: [
     // 'virtual',
-    // 'keyboard',
+    'keyboard',
     'mousewheel',
     'navigation',
     'pagination',
@@ -9,12 +9,12 @@ module.exports = {
     // 'parallax',
     // 'zoom',
     // 'lazy',
-    // 'controller',
+    'controller',
     // 'a11y',
     // 'history',
     // 'hash-navigation',
     'autoplay',
-    // 'effect-fade',
+    'effect-fade',
     // 'effect-cube',
     // 'effect-flip',
     // 'effect-coverflow',
