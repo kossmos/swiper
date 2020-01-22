@@ -7,7 +7,7 @@
  *
  * Released under the MIT License
  *
- * Released on: January 11, 2020
+ * Released on: January 22, 2020
  */
 
 /**
