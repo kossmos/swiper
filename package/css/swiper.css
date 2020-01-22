@@ -1,5 +1,5 @@
 /**
- * Swiper 5.2.5
+ * Swiper 5.2.6
  * Most modern mobile touch slider and framework with hardware accelerated transitions
  * http://swiperjs.com
  *
@@ -380,6 +380,15 @@ button.swiper-pagination-bullet {
 }
 .swiper-scrollbar-lock {
   display: none;
+}
+/* a11y */
+.swiper-container .swiper-notification {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: -1000;
 }
 .swiper-container-fade.swiper-container-free-mode .swiper-slide {
   transition-timing-function: ease-out;

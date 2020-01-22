@@ -1,6 +1,6 @@
 module.exports = {
   components: [
-    // 'virtual',
+    'virtual',
     'keyboard',
     'mousewheel',
     'navigation',
@@ -10,8 +10,8 @@ module.exports = {
     // 'zoom',
     // 'lazy',
     'controller',
-    // 'a11y',
-    // 'history',
+    'a11y',
+    'history',
     'hash-navigation',
     'autoplay',
     'effect-fade',
