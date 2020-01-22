@@ -1,6 +1,6 @@
 {
   "name": "@modulbank/swiper",
-  "version": "5.2.5",
+  "version": "5.2.6",
   "description": "Most modern mobile touch slider and framework with hardware accelerated transitions",
   "scripts": {
     "build:dev": "cross-env NODE_ENV=development gulp build",
