@@ -1,11 +1,11 @@
 module.exports = {
   components: [
-    'virtual',
+    // 'virtual',
     'keyboard',
     'mousewheel',
     'navigation',
     'pagination',
-    // 'scrollbar',
+    'scrollbar',
     // 'parallax',
     // 'zoom',
     // 'lazy',
