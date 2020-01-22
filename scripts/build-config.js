@@ -12,7 +12,7 @@ module.exports = {
     'controller',
     // 'a11y',
     // 'history',
-    // 'hash-navigation',
+    'hash-navigation',
     'autoplay',
     'effect-fade',
     // 'effect-cube',
